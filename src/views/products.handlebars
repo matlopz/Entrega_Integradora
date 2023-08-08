@@ -1,0 +1,37 @@
+<!-- products.handlebars -->
+<!-- products.handlebars -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Products</title>
+</head>
+<body>
+  <h1>Lista de Productos</h1>
+  <ul>
+    {{#each products}}
+            <li>{{this.name}} - ${{this.price}}</li>
+            <li>{{this.description}}</li>
+            <li>{{this.code}}</li>
+            <li>{{this.title}}</li>
+            <li>{{this.status}}</li>
+            <li>{{this.stock}}</li>
+            <li>{{this.category}}</li>
+            <li>{{this.thumbnails}}</li>
+            <br>
+    {{/each}}
+  </ul>
+   <form id="createForm">
+        <label for="productName">Name:</label>
+        <input type="text" id="productName" name="name">
+        <br>
+        <label for="productPrice">Price:</label>
+        <input type="number" id="productPrice" name="price">
+        <br>
+        <button onclick="addProduct(event)">Add Product</button>
+    </form><br>
+<script src="/js/index.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+</body>
+
+</html>
