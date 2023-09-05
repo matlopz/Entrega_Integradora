@@ -1,84 +1,71 @@
 const express = require('express');
-const io = require('../io');
 const router = express.Router();
 const productsService = require('../services/productsService');
-const HTTP_STATUS_CODE = require('../constants/error.constants');
 
 router.get('/', async (req, res) => {
-  try {
-    const products = await productsService.getAllProducts();
-    console.log(products); 
-    res.render('products', { products });
-  } catch (err) {
-    res.status(HTTP_STATUS_CODE.SERVER).json({ err });
-  }
-});
+    try {
+      console.log('GET Products - Inicio');
+      
+      const products = await productsService.getAllProducts({})
+      console.log('GET Products - Productos encontrados:', products);
 
-router.get('/realTimeProducts', async (req, res) => {
-  try {
-    const products = await productsService.getAllProducts();
-    res.render('realTimeProducts', { products });
-  } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
-  }
-});
-
+      return res.json({products})
+      
+      //console.log('GET Products - Renderización exitosa');
+    } catch (err) {
+      console.error('GET Products - Error:', err);
+      res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    }
+  });
 
 router.get('/:pid', async (req, res) => {
   try {
     const pid = req.params.pid;
     const product = await productsService.getProductById(pid);
     if (product) {
-      res.status(HTTP_STATUS_CODE.OK).json(product);
+     // res.json(product);
+ res.render(product)
     } else {
-      res.status(HTTP_STATUS_CODE.NOT_FOUND).json({ error: 'Product not found' });
+      res.status(404).json({ error: 'Product not found' });
     }
   } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-router.post('/realTimeProducts', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const newProduct = req.body;
-    const addedProduct = await productsService.addProduct(newProduct);
-    io.emit('addProduct', addedProduct);
-    const products = await productsService.getAllProducts();
-    res.render('realTimeProducts', { products });
-    console.log('Nuevo producto:', addedProduct);
+    const newProduct = req.body; // Asegúrate de que los datos se envíen correctamente
+    const createdProduct = await productsService.addProduct(newProduct);
+    res.status(201).json(createdProduct);
   } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-router.put('/realTimeProducts/:pid', async (req, res) => {
+router.put('/:pid', async (req, res) => {
   try {
     const pid = req.params.pid;
-    const updatedProduct = req.body;
-    const updatedProductResult = await productsService.updateProduct(pid, updatedProduct);
-    console.log('Resultado de la actualización:', updatedProductResult); 
-    // Verificar si el producto se actualizó correctamente
-    if (updatedProductResult) {
-      io.emit('productUpdated', updatedProductResult);
-      res.status(HTTP_STATUS_CODE.OK).json(updatedProductResult);
+    const updatedProductData = req.body; // Asegúrate de que los datos se envíen correctamente
+    const updatedProduct = await productsService.updateProduct(pid, updatedProductData);
+    if (updatedProduct) {
+      res.json(updatedProduct);
     } else {
-      res.status(HTTP_STATUS_CODE.NOT_FOUND).json({ error: 'Product not found' });
+      res.status(404).json({ error: 'Product not found' });
     }
   } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-router.delete('/realTimeProducts/:pid', async (req, res) => {
+router.delete('/:pid', async (req, res) => {
   try {
     const pid = req.params.pid;
     await productsService.deleteProduct(pid);
-    io.emit('deleteProduct', pid);
-    res.status(HTTP_STATUS_CODE.OK).json({ message: 'Product deleted successfully' });
+    res.sendStatus(204);
   } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 module.exports = router;

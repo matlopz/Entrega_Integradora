@@ -1,37 +1,40 @@
 const express = require('express');
 const router = express.Router();
 const cartsService = require('../services/cartsService');
-const HTTP_STATUS_CODE = require('../constants/error.constants');
+const Chat = require('../io');
+const io = Chat()
+
 
 router.get('/', async (req, res) => {
   try {
     const carts = await cartsService.getAllCarts();
-    res.status(HTTP_STATUS_CODE.OK).json(carts);
+    // Renderiza la vista carts.handlebars con la lista de carritos
+    res.json(carts); // Asegúrate de tener la vista y el motor de plantillas configurados correctamente
   } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
-  }
-});
-
-router.post('/', async (req, res) => {
-  try {
-    const newCart = await cartsService.createCart();
-    res.status(HTTP_STATUS_CODE.CREATED).json(newCart);
-  } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 router.get('/:cid', async (req, res) => {
   try {
     const cid = req.params.cid;
-    const cartProducts = await cartsService.getCartProducts(cid);
-    if (cartProducts) {
-      res.json(cartProducts);
+    const cart = await cartsService.getCartProducts(cid);
+    if (cart) {
+      res.json(cart);
     } else {
-      res.status(HTTP_STATUS_CODE.NOT_FOUND).json({ error: 'Cart not found' });
+      res.status(404).json({ error: 'Cart not found' });
     }
   } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  }
+});
+
+router.post('/', async (req, res) => {
+  try {
+    const newCart = await cartsService.createCart();
+    res.status(201).json(newCart);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -39,15 +42,17 @@ router.post('/:cid/product/:pid', async (req, res) => {
   try {
     const cid = req.params.cid;
     const pid = req.params.pid;
-    const quantity = req.body.quantity;
-    const addedProduct = await cartsService.addProductToCart(cid, pid, quantity);
-    if (!addedProduct) {
-      res.status(HTTP_STATUS_CODE.NOT_FOUND).json({ error: 'Cart not found' });
-    } else {
-      res.json(addedProduct);
-    }
+    const quantity = req.body.quantity; 
+
+    // Agregar el producto al carrito utilizando el servicio cartsService
+    const result = await cartsService.addProductToCart(cid, pid, quantity);
+
+    // Emitir el producto agregado al carrito a través de Socket.IO
+    io.emit('productAddedToCart', { cartId: cid, product: result });
+
+    res.status(result.statusCode || 200).json(result);
   } catch (err) {
-    res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

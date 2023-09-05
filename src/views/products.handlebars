@@ -1,37 +1,21 @@
-<!-- products.handlebars -->
-<!-- products.handlebars -->
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Products</title>
+  <title>Tiempo Real</title>
+  <link rel="stylesheet" href="/css/index.css">
 </head>
 <body>
-  <h1>Lista de Productos</h1>
-  <ul>
-    {{#each products}}
-            <li>{{this.name}} - ${{this.price}}</li>
-            <li>{{this.description}}</li>
-            <li>{{this.code}}</li>
-            <li>{{this.title}}</li>
-            <li>{{this.status}}</li>
-            <li>{{this.stock}}</li>
-            <li>{{this.category}}</li>
-            <li>{{this.thumbnails}}</li>
-            <br>
-    {{/each}}
+
+
+
+  <h1>Productos en Tiempo Real</h1>
+  <ul id="productList">
   </ul>
-   <form id="createForm">
-        <label for="productName">Name:</label>
-        <input type="text" id="productName" name="name">
-        <br>
-        <label for="productPrice">Price:</label>
-        <input type="number" id="productPrice" name="price">
-        <br>
-        <button onclick="addProduct(event)">Add Product</button>
-    </form><br>
-<script src="/js/index.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-
+  <br>
+  <form action="/carts" method="GET">
+    <button type="submit">Crear Carrito</button>
+  </form>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/cart.js"></script>
 </body>
-
 </html>
